@@ -7,7 +7,12 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Cue: listen from the good part">
 <meta property="og:description" content="Open this link to hear the song from the moment someone picked for you.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://cue.unisonarity.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0e1210">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e1210'/%3E%3Crect x='12' y='27' width='5' height='10' rx='2.5' fill='%239aa59d'/%3E%3Crect x='21' y='20' width='5' height='24' rx='2.5' fill='%239aa59d'/%3E%3Crect x='38' y='17' width='5' height='30' rx='2.5' fill='%239aa59d'/%3E%3Crect x='47' y='24' width='5' height='16' rx='2.5' fill='%239aa59d'/%3E%3Crect x='30' y='10' width='4' height='44' rx='2' fill='%23e9b44c'/%3E%3C/svg%3E">
 <title>Cue</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,6 +68,8 @@ details[open] summary{margin-bottom:12px}
 .embedwrap{min-height:152px;border-radius:12px;overflow:hidden}
 .embedwrap iframe{display:block;width:100%}
 .signedout{border-left:2px solid var(--line);padding:0 0 0 14px;color:var(--muted);font-size:.85rem}
+.previewui{display:flex;flex-direction:column;gap:10px}
+.previewui .small{border-left:2px solid var(--cue);padding-left:14px}
 
 .foot{margin-top:auto;border-top:1px solid var(--line);padding-top:12px;color:var(--dim);font-size:.8rem}
 .foot a{color:var(--muted)}
@@ -129,16 +136,20 @@ details[open] summary{margin-bottom:12px}
     <h1>Starts at <span class="when" id="whenLabel"></span></h1>
     <p class="noteout" id="noteOut" hidden></p>
     <div class="embedwrap"><div id="embed"></div></div>
-    <button type="button" id="go">Play from <span id="goLabel"></span></button>
-    <div class="signedout">
-      <p>Full song if you're signed in to Spotify here, otherwise a 30-second preview. <a id="open" href="#" target="_blank" rel="noopener">Open in Spotify</a></p>
+    <div class="previewui" id="previewui" hidden>
+      <a class="btn" id="openBig" href="#" target="_blank" rel="noopener">Open in Spotify, then skip to <span id="skipLabel"></span></a>
+      <p class="small" id="previewNote"></p>
     </div>
-    <p class="small" id="byline" hidden>From <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>, by Ben Linford.</p>
+    <button type="button" id="go">Play from <span id="goLabel"></span></button>
+    <div class="signedout" id="signedout">
+      <p>Full song if you're signed in to Spotify in this browser, otherwise a short preview. <a id="open" href="#" target="_blank" rel="noopener">Open in Spotify</a></p>
+    </div>
+    <p class="small" id="byline" hidden>From <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>, by <a href="https://open.spotify.com/artist/6ddQgZhBS2xsynMqQTm87V" target="_blank" rel="noopener">Ben Linford</a>.</p>
   </main>
 
   <footer class="foot">
-    <p id="footMake">Made by <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>. Not affiliated with Spotify. Listeners signed in to Spotify hear the full song, others a 30-second preview.</p>
-    <p id="footPlay" hidden>Made with <a href="./">Cue</a>. Make your own link. Not affiliated with Spotify.</p>
+    <p id="footMake">Made by <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>. Not affiliated with Spotify. Listeners signed in to Spotify hear the full song, others a short preview. Cue counts visits and button use, with no cookies and no personal data.</p>
+    <p id="footPlay" hidden>Made with <a href="./">Cue</a>. <a id="makeOwn" href="./">Make your own link</a>. Not affiliated with Spotify. No cookies.</p>
   </footer>
 
 </div>
@@ -147,6 +158,25 @@ details[open] summary{margin-bottom:12px}
 (function(){
   var params = new URLSearchParams(location.search);
   var $ = function(id){ return document.getElementById(id); };
+
+  /* Analytics: counts visits and button use only. No cookies, no personal data, no IPs stored by us.
+     GoatCounter site code goes here (for example 'cue'). Leave it empty and nothing is sent. */
+  var GC = '';
+  var queue = [];
+  function ping(name, label){
+    if(!GC) return;
+    var o = {path:'e/' + name + (label ? '/' + label : ''), title:name + (label ? ': ' + label : ''), event:true};
+    if(window.goatcounter && window.goatcounter.count){ window.goatcounter.count(o); } else { queue.push(o); }
+  }
+  function initAnalytics(){
+    if(!GC || navigator.doNotTrack === '1'){ GC = ''; return; }
+    var s = document.createElement('script');
+    s.async = true; s.src = 'https://gc.zgo.at/count.js';
+    s.setAttribute('data-goatcounter', 'https://' + GC + '.goatcounter.com/count');
+    s.onload = function(){ queue.splice(0).forEach(function(o){ window.goatcounter.count(o); }); };
+    document.head.appendChild(s);
+  }
+  initAnalytics();
 
   function parseTime(s){
     s = String(s||'').trim().toLowerCase();
@@ -182,6 +212,7 @@ details[open] summary{margin-bottom:12px}
 
   function showMaker(){
     $('make').hidden = false;
+    ping('maker-open');
     $('form').addEventListener('submit', function(e){
       e.preventDefault(); $('err').textContent='';
       var sp = parseSpotify($('src').value);
@@ -192,38 +223,51 @@ details[open] summary{margin-bottom:12px}
       var extra = (nt ? '&n=' + encodeURIComponent(nt) : '') + ($('byIn').checked ? '&by=unisonarity' : '');
       var base = (location.protocol==='file:') ? location.href.split('?')[0] : location.origin + location.pathname;
       var url = base + '?track=' + sp.id + (sp.type==='episode'?'&type=episode':'') + '&t=' + t + extra;
+      ping('make-link', sp.type);
       showShare(url, t, nt);
     });
   }
 
   function showShare(url, t, note){
     $('make').hidden = true; $('done').hidden = false;
-    $('link').value = url; $('try').href = url;
+    /* Each channel gets its own &s= tag so a shared link shows where it was sent from. */
+    var u = function(ch){ return url + '&s=' + ch; };
+    var copyUrl = u('copy');
+    $('link').value = copyUrl; $('try').href = url;
     var enc = encodeURIComponent;
     var msg = 'Listen from ' + fmt(t) + (note ? ' (' + note + ')' : '') + '.';
-    $('shText').href = 'sms:?&body=' + enc(msg + ' ' + url);
-    $('shMail').href = 'mailto:?subject=' + enc('A song, from the good part') + '&body=' + enc(msg + '\n\n' + url);
-    $('shWa').href = 'https://wa.me/?text=' + enc(msg + ' ' + url);
-    $('shX').href = 'https://twitter.com/intent/tweet?text=' + enc(msg) + '&url=' + enc(url);
-    $('shFb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + enc(url);
+    $('shText').href = 'sms:?&body=' + enc(msg + ' ' + u('sms'));
+    $('shMail').href = 'mailto:?subject=' + enc('A song, from the good part') + '&body=' + enc(msg + '\n\n' + u('email'));
+    $('shWa').href = 'https://wa.me/?text=' + enc(msg + ' ' + u('whatsapp'));
+    $('shX').href = 'https://twitter.com/intent/tweet?text=' + enc(msg) + '&url=' + enc(u('x'));
+    $('shFb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + enc(u('facebook'));
+    [['shText','sms'],['shMail','email'],['shWa','whatsapp'],['shX','x'],['shFb','facebook']].forEach(function(p){
+      $(p[0]).addEventListener('click', function(){ ping('share', p[1]); });
+    });
+    $('try').addEventListener('click', function(){ ping('check-link'); });
     if(navigator.share){
       var b = $('nativeShare'); b.hidden = false;
       b.addEventListener('click', function(){
-        navigator.share({title:'Cue', text:msg, url:url}).catch(function(){});
+        ping('share', 'native');
+        navigator.share({title:'Cue', text:msg, url:u('share')}).catch(function(){});
       });
     }
     $('copy').addEventListener('click', function(){
       var btn=this, link=$('link');
       function done(){ btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy'},1500); }
+      ping('share', 'copy');
       link.select();
       if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(url).then(done, function(){ try{ document.execCommand('copy'); done(); }catch(e){} });
+        navigator.clipboard.writeText(copyUrl).then(done, function(){ try{ document.execCommand('copy'); done(); }catch(e){} });
       } else { try{ document.execCommand('copy'); done(); }catch(e){} }
     });
   }
 
   function showPlayer(type, id, startSec){
     document.body.classList.add('isplay');
+    ping('view', (params.get('s') || 'direct').replace(/[^a-z]/g,'').slice(0,12) || 'direct');
+    $('open').addEventListener('click', function(){ ping('open-spotify'); });
+    $('makeOwn').addEventListener('click', function(){ ping('make-own'); });
     $('play').hidden = false; $('footMake').hidden = true; $('footPlay').hidden = false;
     document.title = 'Cue: starts at ' + fmt(startSec);
     if(noteText){ var no = $('noteOut'); no.textContent = noteText; no.hidden = false; }
@@ -231,8 +275,29 @@ details[open] summary{margin-bottom:12px}
     $('whenLabel').textContent = fmt(startSec);
     $('goLabel').textContent = fmt(startSec);
     $('open').href = 'https://open.spotify.com/' + type + '/' + id;
+    $('openBig').href = $('open').href;
+    $('openBig').addEventListener('click', function(){ ping('open-spotify'); });
+    $('skipLabel').textContent = fmt(startSec);
     var uri = 'spotify:' + type + ':' + id;
-    var ctrl = null, seeked = false, pressed = false;
+    var ctrl = null, seeked = false, mode = 'unknown';
+
+    /* loadEntity is Spotify's current call; loadUri is the older one. startAt is in seconds. */
+    function load(startAt){
+      if(ctrl.loadEntity){ startAt ? ctrl.loadEntity(uri, false, startAt) : ctrl.loadEntity(uri); }
+      else { startAt ? ctrl.loadUri(uri, false, startAt) : ctrl.loadUri(uri); }
+    }
+
+    /* Not signed in to Spotify in this browser: the embed only has a short preview, and a start time
+       past its end leaves it parked with nothing playing. So play the preview from the beginning and
+       point the listener to Spotify for the real thing. */
+    function enterPreview(d){
+      mode = 'preview'; ping('heard-preview');
+      var secs = Math.max(1, Math.round(d.duration / 1000));
+      $('previewNote').textContent = 'This browser isn’t signed in to Spotify, so only a ' + secs + '-second preview can play here. For the moment at ' + fmt(startSec) + ', open it in Spotify and skip ahead.';
+      $('previewui').hidden = false; $('signedout').hidden = true;
+      var g = $('go'); g.textContent = 'Play the preview here'; g.classList.add('ghost');
+      load(0); ctrl.play();
+    }
 
     window.onSpotifyIframeApiReady = function(api){
       api.createController($('embed'), {uri:uri, width:'100%', height:152}, function(c){
@@ -241,15 +306,21 @@ details[open] summary{margin-bottom:12px}
         if(fr){ fr.setAttribute('loading','eager'); }
         c.addListener('playback_update', function(e){
           var d = e.data || {};
-          if(pressed && !seeked && !d.isPaused && d.position < 3000 && startSec>0){ seeked = true; c.seek(startSec); }
+          if(mode === 'unknown' && d.duration > 0){
+            if(d.duration <= 31000){ enterPreview(d); return; }
+            mode = 'full'; ping('heard-full');
+          }
+          /* Full song: if playback began near 0, move it to the start time once. */
+          if(mode === 'full' && !seeked && !d.isPaused && d.position < 3000 && startSec > 0){ seeked = true; c.seek(startSec); }
         });
       });
     };
     $('go').addEventListener('click', function(){
       if(!ctrl) return;
-      pressed = true; seeked = false;
-      ctrl.loadUri(uri, false, startSec);
-      ctrl.play();
+      ping('play-press');
+      if(mode === 'preview'){ ctrl.seek(0); ctrl.play(); return; }
+      seeked = false;
+      load(startSec); ctrl.play();
     });
     var s = document.createElement('script');
     s.src = 'https://open.spotify.com/embed/iframe-api/v1'; s.async = true;
