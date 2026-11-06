@@ -83,6 +83,17 @@ button.ghost{background:transparent;color:var(--text);border:1px solid var(--lin
 .embedwrap iframe{display:block;width:100%}
 .signedout{border-left:2px solid var(--line);padding:0 0 0 14px;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:.92rem}
 
+/* player view: everything fits on one screen, no scrolling */
+body.isplay{padding-block:14px 14px}
+body.isplay .wrap{gap:16px;min-height:calc(100svh - 28px)}
+body.isplay .top{margin-bottom:2px}
+body.isplay h1{font-size:clamp(1.7rem,6vw,2.3rem)}
+body.isplay .player{gap:14px}
+body.isplay .noteout{font-size:1.15rem}
+body.isplay .signedout{font-size:.85rem;gap:4px}
+body.isplay .foot{margin-top:auto;padding-top:12px;font-size:.8rem}
+body.isplay .disc{display:none}
+
 /* footer */
 .foot{border-top:1px solid var(--line);padding-top:20px;display:flex;flex-direction:column;gap:6px;color:var(--dim);font-size:.85rem}
 .foot a{color:var(--muted)}
@@ -172,15 +183,14 @@ button.ghost{background:transparent;color:var(--text);border:1px solid var(--lin
     <div class="embedwrap"><div id="embed"></div></div>
     <button type="button" id="go">Play from <span id="goLabel"></span></button>
     <div class="signedout">
-      <p>The full song plays if you're signed in to Spotify in this browser. If you're not, you'll hear a 30-second preview.</p>
-      <p><a id="open" href="#" target="_blank" rel="noopener">Open the song in Spotify</a></p>
+      <p>Full song if you're signed in to Spotify here, otherwise a 30-second preview. <a id="open" href="#" target="_blank" rel="noopener">Open in Spotify</a></p>
     </div>
     <p class="small" id="byline" hidden>From <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>, by Ben Linford.</p>
   </main>
 
   <footer class="foot">
-    <p id="footPlay" hidden>Made with <a href="./">Cue</a>. Make your own link.</p>
-    <p>Cue is made by <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>. It isn't affiliated with Spotify.</p>
+    <p id="footPlay" hidden>Made with <a href="./">Cue</a>. Make your own link. Not affiliated with Spotify.</p>
+    <p class="disc">Cue is made by <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>. It isn't affiliated with Spotify.</p>
   </footer>
 
 </div>
@@ -268,6 +278,7 @@ button.ghost{background:transparent;color:var(--text);border:1px solid var(--lin
   function showPlayer(type, id, startSec){
     document.getElementById('play').hidden = false;
     document.getElementById('footPlay').hidden = false;
+    document.body.classList.add('isplay');
     document.title = 'Cue: starts at ' + fmt(startSec);
     if(noteText){ var no = document.getElementById('noteOut'); no.textContent = noteText; no.hidden = false; }
     if(params.get('by') === 'unisonarity'){ document.getElementById('byline').hidden = false; }
