@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start Time Link</title>
+<style>
+/* Layout: one centered column. Generator form on top; with ?track=…&t=… the same page becomes the player. */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --fg:#17201b; --muted:#5d6b63; --line:#dde3de;
+  --accent:#1a7f4b; --accent-fg:#ffffff; --warn:#a4491b;
+  --font-display:"Fraunces", Georgia, "Times New Roman", serif;
+  --font-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101612; --panel:#18211b; --fg:#e8eee9; --muted:#9aa89f; --line:#2a362e;
+    --accent:#4ccf8a; --accent-fg:#0a1a10; --warn:#e79a6c; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101612; --panel:#18211b; --fg:#e8eee9; --muted:#9aa89f; --line:#2a362e;
+  --accent:#4ccf8a; --accent-fg:#0a1a10; --warn:#e79a6c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;
+  padding-block:40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1{font-family:var(--font-display);font-weight:600;font-size:clamp(1.9rem,6vw,2.5rem);line-height:1.1;margin:0;text-wrap:balance}
+p{margin:0}
+.lede{color:var(--muted);max-width:52ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:16px}
+label{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+input{width:100%;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;min-width:0}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 140px;gap:12px}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+button{font:inherit;font-weight:600;border:0;border-radius:6px;padding:11px 16px;cursor:pointer;background:var(--accent);color:var(--accent-fg)}
+button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.out{display:flex;gap:8px}
+.out input{font-family:var(--font-mono);font-size:.85rem}
+.err{color:var(--warn);font-size:.9rem;min-height:1.3em}
+.hint{font-size:.85rem;color:var(--muted)}
+.player{display:flex;flex-direction:column;gap:16px}
+#embed{min-height:152px}
+.when{font-family:var(--font-mono);color:var(--accent)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <section id="make" hidden>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <h1>Start Time Link</h1>
+        <p class="lede">Spotify song links can't carry a start time. Paste a song and a time, and this makes a link that opens a player already set to that spot.</p>
+      </div>
+      <form class="card" id="form" autocomplete="off">
+        <div>
+          <label for="src">Spotify song link</label>
+          <input id="src" type="text" placeholder="https://open.spotify.com/track/…" inputmode="url">
+        </div>
+        <div class="row">
+          <div>
+            <label for="time">Start at</label>
+            <input id="time" type="text" placeholder="1:30">
+          </div>
+          <div style="display:flex;align-items:flex-end"><button type="submit" style="width:100%">Make link</button></div>
+        </div>
+        <p class="err" id="err" role="alert"></p>
+        <div id="result" hidden>
+          <label for="link">Your link</label>
+          <div class="out">
+            <input id="link" type="text" readonly>
+            <button type="button" id="copy" class="ghost">Copy</button>
+          </div>
+          <p class="hint" style="margin-top:10px">Listeners press play once. Signed in to Spotify they hear the full song, otherwise a 30-second preview.</p>
+          <p style="margin-top:10px"><a id="try" href="#" style="color:var(--accent)">Open it to test</a></p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section id="play" class="player" hidden>
+    <h1>Starts at <span class="when" id="whenLabel"></span></h1>
+    <div id="embed"></div>
+    <button type="button" id="go">Play from <span id="goLabel"></span></button>
+    <p class="hint" id="note">Press play to begin at the chosen spot. Signed in to Spotify you hear the full song, otherwise a 30-second preview.</p>
+    <p class="hint"><a id="open" href="#" style="color:var(--accent)" target="_blank" rel="noopener">Open in Spotify</a></p>
+  </section>
+</main>
+
+<script>
+(function(){
+  var params = new URLSearchParams(location.search);
+
+  function parseTime(s){
+    s = String(s||'').trim().toLowerCase();
+    if(!s) return null;
+    if(/^\d+$/.test(s)) return parseInt(s,10);
+    var m = s.match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})$/);
+    if(m) return (parseInt(m[1]||0,10)*3600)+(parseInt(m[2],10)*60)+parseInt(m[3],10);
+    m = s.match(/^(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+)s)?$/);
+    if(m && (m[1]||m[2]||m[3])) return (parseInt(m[1]||0,10)*3600)+(parseInt(m[2]||0,10)*60)+parseInt(m[3]||0,10);
+    return null;
+  }
+  function fmt(sec){
+    var h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60;
+    var p=function(n){return n<10?'0'+n:''+n};
+    return h? h+':'+p(m)+':'+p(s) : m+':'+p(s);
+  }
+  function parseSpotify(s){
+    s = String(s||'').trim();
+    var m = s.match(/spotify:(track|episode):([A-Za-z0-9]{22})/) ||
+            s.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|episode)\/([A-Za-z0-9]{22})/);
+    if(m) return {type:m[1], id:m[2]};
+    if(/^[A-Za-z0-9]{22}$/.test(s)) return {type:'track', id:s};
+    return null;
+  }
+
+  var track = params.get('track');
+  var type = params.get('type') === 'episode' ? 'episode' : 'track';
+  var start = parseTime(params.get('t'));
+
+  if(track && /^[A-Za-z0-9]{22}$/.test(track)){
+    showPlayer(type, track, start||0);
+  } else {
+    showMaker();
+  }
+
+  function showMaker(){
+    document.getElementById('make').hidden = false;
+    var form=document.getElementById('form'), err=document.getElementById('err'),
+        res=document.getElementById('result'), link=document.getElementById('link');
+    form.addEventListener('submit', function(e){
+      e.preventDefault(); err.textContent=''; res.hidden=true;
+      var sp = parseSpotify(document.getElementById('src').value);
+      var t = parseTime(document.getElementById('time').value);
+      if(!sp){ err.textContent='That doesn’t look like a Spotify song link. Copy it from Share → Copy song link.'; return; }
+      if(t===null){ err.textContent='Enter a time like 1:30, 90, or 1m30s.'; return; }
+      var u = location.origin + location.pathname + '?track=' + sp.id + (sp.type==='episode'?'&type=episode':'') + '&t=' + t;
+      if(location.protocol==='file:') u = location.href.split('?')[0] + '?track=' + sp.id + '&t=' + t;
+      link.value = u; document.getElementById('try').href = u; res.hidden=false;
+    });
+    document.getElementById('copy').addEventListener('click', function(){
+      var b=this;
+      function done(){ b.textContent='Copied'; setTimeout(function(){b.textContent='Copy'},1500); }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(link.value).then(done, function(){ link.select(); });
+      } else { link.select(); }
+    });
+  }
+
+  function showPlayer(type, id, startSec){
+    document.getElementById('play').hidden = false;
+    document.title = 'Starts at ' + fmt(startSec);
+    document.getElementById('whenLabel').textContent = fmt(startSec);
+    document.getElementById('goLabel').textContent = fmt(startSec);
+    document.getElementById('open').href = 'https://open.spotify.com/' + type + '/' + id;
+    var uri = 'spotify:' + type + ':' + id;
+    var ctrl = null, seeked = false;
+
+    window.onSpotifyIframeApiReady = function(api){
+      api.createController(document.getElementById('embed'), {uri:uri, width:'100%', height:152}, function(c){
+        ctrl = c;
+        c.addListener('playback_update', function(e){
+          var d = e.data || {};
+          // Fallback: if playback began near 0 after our press, seek to the start time once.
+          if(pressed && !seeked && !d.isPaused && d.position < 3000 && startSec>0){
+            seeked = true; c.seek(startSec);
+          }
+        });
+      });
+    };
+    var pressed = false;
+    document.getElementById('go').addEventListener('click', function(){
+      if(!ctrl) return;
+      pressed = true; seeked = false;
+      ctrl.loadUri(uri, false, startSec);
+      ctrl.play();
+    });
+    var s = document.createElement('script');
+    s.src = 'https://open.spotify.com/embed/iframe-api/v1'; s.async = true;
+    document.body.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>
