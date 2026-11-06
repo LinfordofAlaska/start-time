@@ -34,4 +34,4 @@ Cue sets no cookies and stores no personal data. If a GoatCounter site code is s
 
 ## Credits
 
-Made by [Unisonarity](https://unisonarity.com). Not affiliated with Spotify. The player is Spotify's own embed, used under Spotify's embed terms.
+Made by [Unisonarity](https://www.linkedin.com/pulse/unisonarity-benjamin-linford-cfa-az4yc/). Hear the songs on [Spotify](https://open.spotify.com/playlist/6a1oImkmuQMOuLcPSnE5Co) or [Suno](https://suno.com/playlist/faa0098b-5872-4598-9124-b0180282cb1b). Not affiliated with Spotify. The player is Spotify's own embed, used under Spotify's embed terms.

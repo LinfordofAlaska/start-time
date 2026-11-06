@@ -68,7 +68,7 @@ details[open] summary{margin-bottom:12px}
 .embedwrap{min-height:152px;border-radius:12px;overflow:hidden}
 .embedwrap iframe{display:block;width:100%}
 .signedout{border-left:2px solid var(--line);padding:0 0 0 14px;color:var(--muted);font-size:.85rem}
-.previewui{display:flex;flex-direction:column;gap:10px}
+.previewui{display:flex;flex-direction:column;gap:8px}
 .previewui .small{border-left:2px solid var(--cue);padding-left:14px}
 
 .foot{margin-top:auto;border-top:1px solid var(--line);padding-top:12px;color:var(--dim);font-size:.8rem}
@@ -81,7 +81,7 @@ details[open] summary{margin-bottom:12px}
 
   <header class="top">
     <a class="mark" href="./" aria-label="Cue home">Cue<i>.</i></a>
-    <span class="by">by <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a></span>
+    <span class="by">by <a href="https://www.linkedin.com/pulse/unisonarity-benjamin-linford-cfa-az4yc/" target="_blank" rel="noopener">Unisonarity</a></span>
   </header>
 
   <!-- STEP 1: make -->
@@ -144,11 +144,11 @@ details[open] summary{margin-bottom:12px}
     <div class="signedout" id="signedout">
       <p>Full song if you're signed in to Spotify in this browser, otherwise a short preview. <a id="open" href="#" target="_blank" rel="noopener">Open in Spotify</a></p>
     </div>
-    <p class="small" id="byline" hidden>From <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>, by <a href="https://open.spotify.com/artist/6ddQgZhBS2xsynMqQTm87V" target="_blank" rel="noopener">Ben Linford</a>.</p>
+    <p class="small" id="byline" hidden>From <a href="https://www.linkedin.com/pulse/unisonarity-benjamin-linford-cfa-az4yc/" target="_blank" rel="noopener">Unisonarity</a>, by <a href="https://open.spotify.com/artist/6ddQgZhBS2xsynMqQTm87V" target="_blank" rel="noopener">Ben Linford</a>. More on <a href="https://open.spotify.com/playlist/6a1oImkmuQMOuLcPSnE5Co" target="_blank" rel="noopener">Spotify</a> and <a href="https://suno.com/playlist/faa0098b-5872-4598-9124-b0180282cb1b" target="_blank" rel="noopener">Suno</a>.</p>
   </main>
 
   <footer class="foot">
-    <p id="footMake">Made by <a href="https://unisonarity.com" target="_blank" rel="noopener">Unisonarity</a>. Not affiliated with Spotify. Listeners signed in to Spotify hear the full song, others a short preview. Cue counts visits and button use, with no cookies and no personal data.</p>
+    <p id="footMake">Made by <a href="https://www.linkedin.com/pulse/unisonarity-benjamin-linford-cfa-az4yc/" target="_blank" rel="noopener">Unisonarity</a>. Hear the songs on <a href="https://open.spotify.com/playlist/6a1oImkmuQMOuLcPSnE5Co" target="_blank" rel="noopener">Spotify</a> or <a href="https://suno.com/playlist/faa0098b-5872-4598-9124-b0180282cb1b" target="_blank" rel="noopener">Suno</a>. Not affiliated with Spotify. Signed-in listeners hear the full song, others a short preview. Cue counts visits and button use, with no cookies and no personal data.</p>
     <p id="footPlay" hidden>Made with <a href="./">Cue</a>. <a id="makeOwn" href="./">Make your own link</a>. Not affiliated with Spotify. No cookies.</p>
   </footer>
 
@@ -293,7 +293,7 @@ details[open] summary{margin-bottom:12px}
     function enterPreview(d){
       mode = 'preview'; ping('heard-preview');
       var secs = Math.max(1, Math.round(d.duration / 1000));
-      $('previewNote').textContent = 'This browser isn’t signed in to Spotify, so only a ' + secs + '-second preview can play here. For the moment at ' + fmt(startSec) + ', open it in Spotify and skip ahead.';
+      $('previewNote').textContent = 'Not signed in to Spotify in this browser, so only a ' + secs + '-second preview plays here. In Spotify, skip to ' + fmt(startSec) + '.';
       $('previewui').hidden = false; $('signedout').hidden = true;
       var g = $('go'); g.textContent = 'Play the preview here'; g.classList.add('ghost');
       load(0); ctrl.play();
