@@ -10,7 +10,7 @@ Live at [cue.unisonarity.com](https://cue.unisonarity.com/).
 2. Cue gives you a link like `cue.unisonarity.com/?track=…&t=90`, with buttons for Text, Email, WhatsApp, X and Facebook.
 3. The listener opens a small page with the Spotify player and presses **Play from 1:30**.
 
-The page is one static HTML file. There is no server and no account.
+The page is one static HTML file, plus a small Cloudflare Worker (`short-links/`) that stores a link's song, time and note so links can be short (`cue.unisonarity.com/?c=abc123`). If the Worker is unreachable, Cue falls back to a self-contained long link. No account.
 
 ## What listeners hear
 
@@ -21,6 +21,7 @@ The page is one static HTML file. There is no server and no account.
 
 | Parameter | Meaning |
 |---|---|
+| `c` | short link ID (song, time and note are looked up from the Worker) |
 | `track` | Spotify track or episode ID |
 | `type` | `episode` for podcasts (default is a song) |
 | `t` | start time in seconds |
@@ -34,7 +35,7 @@ Changes go to [dev.cue.unisonarity.com](https://dev.cue.unisonarity.com/) first 
 
 ## Privacy
 
-Cue sets no cookies and stores no personal data. If a GoatCounter site code is set in `index.html` (`var GC`), it counts page views and button presses as anonymous events and honors Do Not Track. With the code empty, nothing is sent.
+Cue sets no cookies and collects no personal data. The only thing stored is what a short link needs: the song, start time, optional note (140 characters) and credit flag, kept in a Cloudflare D1 database. Long links (`?track=…`) store nothing. If a GoatCounter site code is set in `index.html` (`var GC`), it counts page views and button presses as anonymous events and honors Do Not Track. With the code empty, nothing is sent.
 
 ## Credits
 
